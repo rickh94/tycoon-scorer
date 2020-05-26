@@ -177,6 +177,11 @@ fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
         Msg::NewGame => {
             model.new_game();
         }
+        Msg::AddPlayerOnEnter(e) => {
+            if e.key() == "Enter" {
+                model.setup_state.num_of_inputs += 1;
+            }
+        }
     }
 }
 

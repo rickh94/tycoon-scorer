@@ -106,6 +106,7 @@ pub fn setup_mode(setup_state: &SetupState) -> Node<Msg> {
         class!["flex", "flex-col", "w-full", "max-w-2xl"],
         h1![class!["font-bold", "text-xl", "text-center"], "Add Players"],
         div![
+            id!["add-player-inputs"],
             (0..setup_state.num_of_inputs).map(|i| {
                 input![
                     class![
@@ -124,9 +125,10 @@ pub fn setup_mode(setup_state: &SetupState) -> Node<Msg> {
                     attrs! {
                         At::Type => "text".to_string(),
                         At::Placeholder => format! ("Player {}", i + 1),
-                        At::Value => setup_state.player_names.get(&i).unwrap_or(&"".to_string())
+                        At::Value => setup_state.player_names.get(&i).unwrap_or(&"".to_string()),
                     },
-                    input_ev(Ev::Input, move |text| Msg::AddPlayer(text, i))
+                    input_ev(Ev::Input, move |text| Msg::AddPlayer(text, i)),
+                    keyboard_ev(Ev::KeyDown, Msg::AddPlayerOnEnter),
                 ]
             }),
             div![

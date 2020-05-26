@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use web_sys;
 
 #[derive(Clone)]
 pub enum Msg {
@@ -10,6 +11,7 @@ pub enum Msg {
     AddPlayer(String, usize),
     MorePlayers,
     SavePlayers,
+    AddPlayerOnEnter(web_sys::KeyboardEvent)
 }
 
 
