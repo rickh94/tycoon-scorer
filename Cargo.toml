@@ -1,0 +1,11 @@
+[package]
+name = "tycoon-scorer"
+version = "0.1.0"
+authors = ["Rick Henry <rickhenry@rickhenry.dev>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+seed = "0.7.0"
