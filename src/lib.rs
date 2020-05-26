@@ -29,10 +29,8 @@ struct Model {
 
 impl Default for Model {
     fn default() -> Self {
-        let mut players = HashMap::new();
-        players.insert(0, Player::new("one"));
         Self {
-            players,
+            players: HashMap::new(),
             round: 1,
             mode: Mode::Normal,
             setup_state: SetupState::new(),
@@ -248,6 +246,22 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
                         class!["flex", "w-full", "justify-center", "mt-2"],
                         score_table(&model.players, &model.players_out),
                     ],
+                    if model.players.len() == 0 {
+                        p![
+                            class![
+                                "flex",
+                                "w-full",
+                                "justify-center",
+                                "mt-2",
+                                "text-center",
+                                "font-bold",
+                                "text-lg"
+                            ],
+                            "Create Some Players by clicking setup!"
+                        ]
+                    } else {
+                        div![]
+                    },
                     p![
                         class!["text-red-700", "font-bold", "mx-auto", "max-w-3xl"],
                         match &model.beggar_message {
@@ -285,7 +299,14 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
                         1 => div![],
                         _ => {
                             div![
-                                class!["flex", "w-full", "justify-center", "mt-2", "mx-auto", "max-w-2xl"],
+                                class![
+                                    "flex",
+                                    "w-full",
+                                    "justify-center",
+                                    "mt-2",
+                                    "mx-auto",
+                                    "max-w-2xl"
+                                ],
                                 player_instructions(&model.players),
                             ]
                         }
