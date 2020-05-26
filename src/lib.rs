@@ -1,15 +1,14 @@
-use seed::{*, prelude::*};
-use std::collections::HashMap;
+use seed::{prelude::*, *};
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
-mod player;
 mod components;
 mod msg;
+mod player;
 
-use crate::player::{Player, Rank};
-use crate::components::{header, setup_mode, game_over_mode, score_table};
+use crate::components::{game_over_mode, header, player_instructions, score_table, setup_mode};
 use crate::msg::{Msg, SetupState};
-
+use crate::player::{Player, Rank};
 
 #[derive(Debug)]
 enum Mode {
@@ -18,7 +17,6 @@ enum Mode {
     GameOver,
 }
 
-
 #[derive(Debug)]
 struct Model {
     players: HashMap<usize, Player>,
@@ -26,8 +24,8 @@ struct Model {
     mode: Mode,
     setup_state: SetupState,
     players_out: HashMap<usize, Rank>,
+    beggar_message: Option<String>,
 }
-
 
 impl Default for Model {
     fn default() -> Self {
@@ -39,6 +37,7 @@ impl Default for Model {
             mode: Mode::Normal,
             setup_state: SetupState::new(),
             players_out: HashMap::new(),
+            beggar_message: None,
         }
     }
 }
@@ -76,6 +75,18 @@ impl Model {
                             // goes bankrupt and is automatically the beggar
                             if tid != pid {
                                 self.players_out.insert(tid, Rank::Beggar);
+                                let new_tycoon_name = match self.players.get(&pid) {
+                                    Some(x) => x.name.as_str(),
+                                    None => "",
+                                };
+                                let new_beggar_name = match self.players.get(&tid) {
+                                    Some(x) => x.name.as_str(),
+                                    None => "",
+                                };
+                                self.beggar_message = Some(format!(
+                                    "{} went out so {} is the beggar automatically.",
+                                    new_tycoon_name, new_beggar_name
+                                ));
                             }
                         }
                         None => (),
@@ -110,7 +121,7 @@ impl Model {
                     }
                 };
             }
-            _ => ()
+            _ => (),
         }
     }
 
@@ -126,6 +137,7 @@ impl Model {
         }
         self.players_out = HashMap::new();
         self.round += 1;
+        self.beggar_message = None;
     }
 
     pub fn get_ranking(&self) -> Vec<Player> {
@@ -185,36 +197,73 @@ fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
     }
 }
 
-
-
-
 fn view(model: &Model) -> impl IntoNodes<Msg> {
     let can_end_round = model.players_out.len() == model.players.len();
     div![
         header(),
         match model.mode {
             Mode::Normal => {
-                div! [
-                    class! ["flex", "w-full", "justify-center", "mt-2", "max-w-3xl", "mx-auto", "flex-col"],
-                    div! [
-                        class! ["flex", "w-full", "justify-center", "mt-2"],
+                div![
+                    class![
+                        "flex",
+                        "w-full",
+                        "justify-center",
+                        "mt-2",
+                        "max-w-3xl",
+                        "mx-auto",
+                        "flex-col"
+                    ],
+                    div![
+                        class!["flex", "w-full", "justify-center", "mt-2"],
                         button![
-                            class! ["px-4", "py-2", "bg-indigo-600", "hover:shadow", "hover:bg-indigo-800", "text-white", "rounded-full", "mx-2"],
+                            class![
+                                "px-4",
+                                "py-2",
+                                "bg-indigo-600",
+                                "hover:shadow",
+                                "hover:bg-indigo-800",
+                                "text-white",
+                                "rounded-full",
+                                "mx-2"
+                            ],
                             simple_ev(Ev::Click, Msg::Setup),
                             "Setup"
                         ],
                         button![
-                            class! ["px-4", "py-2", "bg-red-600", "hover:shadow", "hover:bg-red-800", "text-white", "rounded-full", "mx-2"],
+                            class![
+                                "px-4",
+                                "py-2",
+                                "bg-red-600",
+                                "hover:shadow",
+                                "hover:bg-red-800",
+                                "text-white",
+                                "rounded-full",
+                                "mx-2"
+                            ],
                             simple_ev(Ev::Click, Msg::NewGame),
                             "New Game"
                         ],
                     ],
-                    div! [
-                        class! ["flex", "w-full", "justify-center", "mt-2"],
+                    div![
+                        class!["flex", "w-full", "justify-center", "mt-2"],
                         score_table(&model.players, &model.players_out),
                     ],
+                    p![
+                        class!["text-red-700", "font-bold", "mx-auto", "max-w-3xl"],
+                        match &model.beggar_message {
+                            Some(s) => s.as_str(),
+                            None => "",
+                        },
+                    ],
                     div![
-                        class!["flex", "w-full", "mt-4", "justify-center", "max-w-3xl", "mx-auto"],
+                        class![
+                            "flex",
+                            "w-full",
+                            "mt-4",
+                            "justify-center",
+                            "max-w-3xl",
+                            "mx-auto"
+                        ],
                         button![
                             class! [
                                 "px-6",
@@ -227,20 +276,48 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
                                 "hover:bg-indigo-800" => can_end_round,
                                 "bg-gray-600" => !can_end_round,
                             ],
-                            attrs!{At::Disabled => (!can_end_round).as_at_value()},
+                            attrs! {At::Disabled => (!can_end_round).as_at_value()},
                             simple_ev(Ev::Click, Msg::EndRound),
                             "End Round"
                         ],
                     ],
+                    match model.round {
+                        1 => div![],
+                        _ => {
+                            div![
+                                class!["flex", "w-full", "justify-center", "mt-2", "mx-auto", "max-w-2xl"],
+                                player_instructions(&model.players),
+                            ]
+                        }
+                    },
                 ]
-            },
+            }
             Mode::GameOver => {
                 div![
-                    class! ["flex", "w-full", "justify-center", "mt-2", "max-w-3xl", "mx-auto", "flex-col", "max-w-3xl"],
+                    class![
+                        "flex",
+                        "w-full",
+                        "justify-center",
+                        "mt-2",
+                        "max-w-3xl",
+                        "mx-auto",
+                        "flex-col",
+                        "max-w-3xl"
+                    ],
                     div![
                         class!["flex", "justify-center", "w-full"],
                         button![
-                            class! ["px-4", "py-2", "bg-red-600", "flex-grow-0", "hover:shadow", "hover:bg-red-800", "text-white", "rounded-full", "mx-2"],
+                            class![
+                                "px-4",
+                                "py-2",
+                                "bg-red-600",
+                                "flex-grow-0",
+                                "hover:shadow",
+                                "hover:bg-red-800",
+                                "text-white",
+                                "rounded-full",
+                                "mx-2"
+                            ],
                             simple_ev(Ev::Click, Msg::NewGame),
                             "New Game"
                         ],
@@ -249,8 +326,8 @@ fn view(model: &Model) -> impl IntoNodes<Msg> {
                 ]
             }
             Mode::Setup => {
-                div! [
-                    class! ["flex", "w-full", "justify-center", "mt-2"],
+                div![
+                    class!["flex", "w-full", "justify-center", "mt-2"],
                     setup_mode(&model.setup_state),
                 ]
             }

@@ -83,7 +83,10 @@ fn player_row(id: &usize, player: &Player, already_out: bool) -> Node<Msg> {
     ]
 }
 
-pub fn score_table(players: &HashMap<usize, Player>, players_out: &HashMap<usize, Rank>) -> Node<Msg> {
+pub fn score_table(
+    players: &HashMap<usize, Player>,
+    players_out: &HashMap<usize, Rank>,
+) -> Node<Msg> {
     table![
         class!["table-auto", "border-collapse", "mt-2"],
         thead![tr![
@@ -97,7 +100,72 @@ pub fn score_table(players: &HashMap<usize, Player>, players_out: &HashMap<usize
             players
                 .iter()
                 .map(|(i, player)| player_row(i, player, players_out.contains_key(i))),
-        ]
+        ],
+    ]
+}
+
+pub fn player_instructions(players: &HashMap<usize, Player>) -> Node<Msg> {
+    let mut tycoon = Player::new("Tycoon");
+    let mut rich = Player::new("Rich");
+    let mut poor = Player::new("Poor");
+    let mut beggar = Player::new("Beggar");
+
+    for (_, player) in players.iter() {
+        match player.rank {
+            Some(Rank::Tycoon) => tycoon = player.clone(),
+            Some(Rank::Rich) => rich = player.clone(),
+            Some(Rank::Poor) => poor = player.clone(),
+            Some(Rank::Beggar) => beggar = player.clone(),
+            None => (),
+        };
+    }
+
+    ul![
+        class!["text-xl", "mx-4"],
+        li![
+            span![
+                class!["text-indigo-600", "font-bold"],
+                format!("{}: ", tycoon.name),
+            ],
+            "passes ",
+            em!["two cards "],
+            "of their choice to ",
+            strong![beggar.name.as_str(),],
+            ", and receives no extra cards.",
+        ],
+        li![
+            span![
+                class!["text-indigo-600", "font-bold"],
+                format!("{}: ", rich.name),
+            ],
+            "passes ",
+            em!["one card "],
+            "of their choice to ",
+            strong![poor.name.as_str()],
+            ", and receives the third extra card (if applicable)",
+        ],
+        li![
+            span![
+                class!["text-indigo-600", "font-bold"],
+                format!("{}: ", poor.name),
+            ],
+            "passes their ",
+            em!["highest card "],
+            "to ",
+            strong![rich.name.as_str()],
+            ", and receives the second extra card (if applicable)",
+        ],
+        li![
+            span![
+                class!["text-indigo-600", "font-bold"],
+                format!("{}: ", beggar.name),
+            ],
+            "passes their ",
+            em!["two highest cards "],
+            "to ",
+            strong![tycoon.name.as_str()],
+            ", and receives the first extra card (if applicable)",
+        ],
     ]
 }
 
